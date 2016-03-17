@@ -1,22 +1,48 @@
 ---
-title: "Assignment 612.1 NL"
+title: "Assignment 612.1 NL - Gapminder Dataset"
 author: "Nick Lesniak"
 date: "March 15, 2016"
 output: html_document
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r, echo=FALSE}
+gapminder_data <- read.table(file="data/gapminder-FiveYearData.csv",sep=',',header=T)
+library(ggplot2)
+library(plyr)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+life.lab <- expression(paste(Delta,'Life Expectancy'))
+gdp.lab <- expression(paste(Delta,'per capita GDP'))
+plot.title <- expression(paste('Relationship between ',Delta,'Life Expectancy and ',Delta,'per capita GDP from 1952-2007'))
 
-```{r}
-summary(cars)
+diff_GDP <- daply(.data=gapminder_data,
+             .variables='country',
+             .fun=function(x) max(x$gdpPercap)-min(x$gdpPercap))
+diff_Life <- daply(.data=gapminder_data,
+                .variables='country',
+                .fun=function(x) max(x$lifeExp)-min(x$lifeExp))
 ```
 
-You can also embed plots, for example:
+Increased per capita GDP has been associated with increased health care expenditures[^1]. Additionally, increased health care expenditures have been shown to increase life expectancy[^2]. Therefore, does the change in per capita GDP positively correlate with the change in life expectancy? To test this relationship, we will investigate the relationship between the change in per capita GDP and life expectancy in 142 countries between 1952 and 2007 from the gapminder dataset. 
+```{r}
+# Number of countries 
+length(levels(gapminder_data$country))
+```
+```{r}
+# Data collected from the years:
+unique(gapminder_data$year)
+```
+If this positive correlation is true, we would expect greater increases in per capita GDP to be associated with greater increases in life expectancy.
+
 
 ```{r, echo=FALSE}
-plot(cars)
+ggplot(data=gapminder_data[gapminder_data$year==1952,], aes(x=diff_Life, y=diff_GDP)) +
+  geom_point(aes(color=continent))+scale_y_log10()+xlab(life.lab)+
+  ylab(gdp.lab)+geom_smooth(method='lm',size=1)+ ggtitle(plot.title)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+However, the trend observed in this data set does not support that the change in per capita GDP positively correlates with the change in life expectancy. Many factors may be able to account for this lack positive relationship. One such factor which this dataset does not take into account is the portion of the GDP per capita that used for health care expeditures. More data is needed to improve our understanding of this relationship.
+
+
+***
+[^1]:Sulku, SN., Caner, A. Health care expenditures and gross domestic product: the Turkish case. 2011 Feb;12(1):29-38. [PubMed](http://www.ncbi.nlm.nih.gov/pubmed/20151170)
+[^2]:Mackenbach, JP., et al. Sharp upturn of life expectancy in the Netherlands: effect of more health care for the elderly? Eur J Epidemiology. 2011 Dec;26(12):903-14. [PubMed](http://www.ncbi.nlm.nih.gov/pubmed/22127495)
